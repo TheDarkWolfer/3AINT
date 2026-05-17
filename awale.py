@@ -84,21 +84,65 @@ class AwaleBoard():
     # en compte le.a joueur.euse actuel.le & les opés à
     # faire sur les cases
     def makeMove(self, hollowSpot: int, turn: str):
+        # Le compteur est incrémenté afin d'avoir la somme des graînes dedans
         count = self._board[hollowSpot]
         self._board[hollowSpot] = 0
-        fillSpot = hollowSpot + 1
+        fillSpot = (hollowSpot + 1) % 12
+
+        # Pour expliquer un peu ça : à chaque ajout de graîne sur le plateau,
+        # on va en retirer une au compteur
         while count > 0:
-            if fillSpot == 12:
-                fillSpot = 0
             if fillSpot != hollowSpot:
                 self._board[fillSpot] += 1
                 count -= 1
-            fillSpot += 1
+            fillSpot = (fillSpot + 1) % 12
 
-            total, validity = self.checkValidBoard()
-            # Erreur si l'état n'est pas valide
-            if not validity:
-                raise Exception(f"État non valide : {total} graines trouvées là où nous devrions en avoir {MAX_SEEDS}")
+        # capture — inchangé
+        for i in range(len(self._board)):
+            if self._board[i] == 2 or self._board[i] == 3:
+                if turn == "red" and i > 5:
+                    self._captured[0] += self._board[i]
+                    self._board[i] = 0
+                elif turn == "blue" and i < 6:
+                    self._captured[1] += self._board[i]
+                    self._board[i] = 0
+
+        total, validity = self.checkValidBoard()
+        if not validity:
+            raise Exception(f"État non valide : {total} graines trouvées là où nous devrions en avoir {MAX_SEEDS}")
+
+    # Là on implémente la détection de fin de partie/victoire... J'avais zappé 
+    # ce détail, oups que des parties infinies ˶•𐃷•˶
+    def checkWin(self) -> str | None:
+        """
+            Retourne 'red', 'blue', ou 'nope' selon qui a gagné ou égalité, et None si la partie n'est pas finie
+        """
+        if self._captured[0] >= 25:
+            return "red"
+        if self._captured[1] >= 25:
+            return "blue"
+            
+        red_can_play  = any(self._board[i] > 0 for i in range(6))
+        blue_can_play = any(self._board[i] > 0 for i in range(6, 12))
+        
+        if not red_can_play or not blue_can_play:
+            # On implémente le don de graînes si applicable
+            for i in range(6):
+                self._captured[1] += self._board[i]
+                self._board[i] = 0
+            for i in range(6,12): 
+                self._captured[0] += self._board[i]
+                self._board[i] = 0
+            
+            if self._captured[0] > self._captured[1]:
+                return "red"
+            elif self._captured[0] < self._captured[1]:
+                return "blue"
+            else:
+                return "nope"
+
+        # Et on continue la partie si aucune des (nombreuses) conditions n'a été remplie
+        return None
 
 
 # Board = AwaleBoard().printBoard()

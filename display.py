@@ -78,13 +78,23 @@ def draw_board(screen, board: AwaleBoard, font, small_font, turn:str):
             True, 
             BLUE
             )
-    # Affichage du tour en cours, pour pas avoir à afficher ça dans le terminal
-    turn_text = font.render(f"Tour : {'Rouge' if turn == 'red' else 'Bleu'}", True, RED if turn == "red" else BLUE)
-    screen.blit(turn_text, (BOARD_X + 300, WINDOW_HEIGHT - 60))
+    # Affichage du tour en cours, pour pas avoir à afficher ça dans le terminal + "win detection"
 
+    gameState = board.checkWin()
 
-    screen.blit(red_score, (BOARD_X, WINDOW_HEIGHT - 60))
-    screen.blit(blue_score, (BOARD_X + 200, WINDOW_HEIGHT - 60))
+    # J'voulais mettre mes kaomojis, mais Pygame accepte pas les caractères trop spéciaux つ╥﹏╥つ
+    if gameState != None:
+        if gameState == "draw":
+            turn_text = font.render(f"Égalité entre les joueur.ses", True, GREEN)
+        else:
+            turn_text = font.render(f"Gagnant.e : {gameState}", True, RED if gameState == "red" else BLUE)
+    else:
+        turn_text = font.render(f"Tour : {'Rouge' if turn == 'red' else 'Bleu'}", True, RED if turn == "red" else BLUE)
+    
+    screen.blit(turn_text, (BOARD_X + 300, WINDOW_HEIGHT - 40))
+
+    screen.blit(red_score, (BOARD_X, WINDOW_HEIGHT - 30))
+    screen.blit(blue_score, (BOARD_X, WINDOW_HEIGHT - 60))
     screen.blit(validity_text, (BOARD_X + 450, WINDOW_HEIGHT - 60))
     screen.blit(title_text, (0,0))
 
@@ -107,6 +117,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 index = get_clicked_cell(event.pos)
                 if index is not None and board.isValid(index, current_turn):
