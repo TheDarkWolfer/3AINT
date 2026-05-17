@@ -23,7 +23,18 @@ CELL_MARGIN = 10
 BOARD_X = 50
 BOARD_Y = 100
 
-def draw_board(screen, board: AwaleBoard, font, small_font):
+def get_clicked_cell(mousePos: tuple) -> int | None:
+    x, y = mousePos
+    for i in range(12):
+        row = 0 if i < 6 else 1
+        col = i if i < 6 else 11 - i
+        cx = BOARD_X + col * (CELL_SIZE + CELL_MARGIN) + CELL_SIZE // 2
+        cy = BOARD_Y + row * (CELL_SIZE + CELL_MARGIN) + CELL_SIZE // 2
+        if abs(x - cx) < CELL_SIZE // 2 and abs(y - cy) < CELL_SIZE // 2:
+            return i
+    return None
+
+def draw_board(screen, board: AwaleBoard, font, small_font, turn:str):
     # Fond du plateau
     pygame.draw.rect(
         screen, BROWN,
@@ -67,6 +78,10 @@ def draw_board(screen, board: AwaleBoard, font, small_font):
             True, 
             BLUE
             )
+    # Affichage du tour en cours, pour pas avoir à afficher ça dans le terminal
+    turn_text = font.render(f"Tour : {'Rouge' if turn == 'red' else 'Bleu'}", True, RED if turn == "red" else BLUE)
+    screen.blit(turn_text, (BOARD_X + 300, WINDOW_HEIGHT - 60))
+
 
     screen.blit(red_score, (BOARD_X, WINDOW_HEIGHT - 60))
     screen.blit(blue_score, (BOARD_X + 200, WINDOW_HEIGHT - 60))
@@ -80,20 +95,26 @@ def main():
     pygame.display.set_caption("Awalé - 3AINT")
     clock = pygame.time.Clock()
 
-    # TODO : Appliquer le font "Fira Code", juste parce que ˶˃ᵕ˂˶
     font = pygame.font.SysFont("monospace", 32, bold=True)
     small_font = pygame.font.SysFont("monospace", 16)
 
     board = AwaleBoard()
-
+    
+    current_turn = "red"   # ← avant le while
     running = True
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                index = get_clicked_cell(event.pos)
+                if index is not None and board.isValid(index, current_turn):
+                    board.makeMove(index, current_turn)
+                    current_turn = "blue" if current_turn == "red" else "red"
 
         screen.fill(WHITE)
-        draw_board(screen, board, font, small_font)
+        draw_board(screen, board, font, small_font, current_turn)
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -102,4 +123,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

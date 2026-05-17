@@ -69,42 +69,36 @@ class AwaleBoard():
 
     # On vérifie que le.a joueur.euse actuel.le a le droit 
     # de faire tel ou tel move
-    def isValid(self, hollowSpot:int, turn:str):
+    def isValid(self, hollowSpot: int, turn: str) -> bool:
         """
             On va partir de la convention rouge/bleue pour 
             différentier les joueurs.es. Plus simple
         """
-        if (turn == "red" and hollowSpot < 7):
-            return True
-        elif (turn == "blue" and hollowSpot > 6):
-            return True
-        else:
-            return False
-
+        if turn == "red" and 0 <= hollowSpot <= 5:
+            return self._board[hollowSpot] > 0
+        elif turn == "blue" and 6 <= hollowSpot <= 11:
+            return self._board[hollowSpot] > 0
+        return False
+ 
     # Logique pour bien faire le move donné, en prenant
-    # en compte le.a joueur.euse actuel.le
-    def makeMove(self,hollowSpot:int,turn:str):
-        # Logique de "semance"
+    # en compte le.a joueur.euse actuel.le & les opés à
+    # faire sur les cases
+    def makeMove(self, hollowSpot: int, turn: str):
         count = self._board[hollowSpot]
-        fillSpot = hollowSpot +1
+        self._board[hollowSpot] = 0
+        fillSpot = hollowSpot + 1
         while count > 0:
-            if (fillSpot == 12):
+            if fillSpot == 12:
                 fillSpot = 0
-            self._board[fillSpot] += 1
-            count -= 1
-        # Logique de capture
-        for i in range(len(self._board)):
-            if self._board[i] == 2 or self._board[i] == 3:
-                if (turn == "red" and i > 6):
-                    self._captured[0] += self._board[i]
-                    self._board[i] = 0
-                elif (turn == "blue" and i < 7):
-                    self._captured[1] += self._board[i]
-                    self._board[i] = 0                   
+            if fillSpot != hollowSpot:
+                self._board[fillSpot] += 1
+                count -= 1
+            fillSpot += 1
 
-        total, validity = self.checkValidBoard()
-        if not validity:
-            raise Exception(f"État non valide : {total} graines trouvées là où nous devrions en avoir {MAX_SEEDS}")
+            total, validity = self.checkValidBoard()
+            # Erreur si l'état n'est pas valide
+            if not validity:
+                raise Exception(f"État non valide : {total} graines trouvées là où nous devrions en avoir {MAX_SEEDS}")
 
 
 # Board = AwaleBoard().printBoard()
